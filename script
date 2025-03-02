@@ -1,0 +1,241 @@
+#!/bin/bash
+
+# Define directories and file paths
+SDK_DIR="/goinfre/$USER/Android/Sdk"
+CMDLINE_TOOLS_ZIP="/goinfre/$USER/commandlinetools-linux-7302050_latest.zip"
+CMDLINE_TOOLS_DIR="$SDK_DIR/cmdline-tools"
+ANDROID_STUDIO_ZIP="/goinfre/$USER/android-studio-2023.1.1.21-linux.tar.gz"
+ANDROID_STUDIO_DIR="/goinfre/$USER/android-studio"
+JAVA_TAR="/goinfre/$USER/OpenJDK21U-jdk_x64_linux_hotspot_21.0.6_7.tar.gz"
+JAVA_DOWNLOAD_URL="https://objects.githubusercontent.com/github-production-release-asset-2e65be/602574963/c476bbc2-f181-4954-877b-d60e0fd6336b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250302%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250302T015024Z&X-Amz-Expires=300&X-Amz-Signature=62bb03dfaf829f9fe1bfae50fc7faca9374350c89c55322fba52e8313535ca0c&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DOpenJDK21U-jdk_x64_linux_hotspot_21.0.6_7.tar.gz&response-content-type=application%2Foctet-stream"
+
+# Ensure directories exist
+mkdir -p "$SDK_DIR"
+mkdir -p "$CMDLINE_TOOLS_DIR"
+
+# Install Android Studio if not installed
+if [ ! -d "$ANDROID_STUDIO_DIR" ]; then
+    echo "Extracting Android Studio..."
+    mkdir -p "$ANDROID_STUDIO_DIR"
+    tar -xvzf "$ANDROID_STUDIO_ZIP" -C "$ANDROID_STUDIO_DIR" --strip-components=1
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract Android Studio."
+        exit 1
+    fi
+    echo "Android Studio extracted successfully."
+else#!/bin/bash
+
+# Define directories and file paths
+SDK_DIR="/goinfre/$USER/Android/Sdk"
+CMDLINE_TOOLS_ZIP="/goinfre/$USER/commandlinetools-linux-7302050_latest.zip"
+CMDLINE_TOOLS_DIR="$SDK_DIR/cmdline-tools"
+ANDROID_STUDIO_ZIP="/goinfre/$USER/android-studio-2023.1.1.21-linux.tar.gz"
+ANDROID_STUDIO_DIR="/goinfre/$USER/android-studio"
+JAVA_TAR="/goinfre/$USER/OpenJDK21U-jdk_x64_linux_hotspot_21.0.6_7.tar.gz"
+JAVA_DOWNLOAD_URL="https://objects.githubusercontent.com/github-production-release-asset-2e65be/602574963/c476bbc2-f181-4954-877b-d60e0fd6336b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250302%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250302T015024Z&X-Amz-Expires=300&X-Amz-Signature=62bb03dfaf829f9fe1bfae50fc7faca9374350c89c55322fba52e8313535ca0c&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DOpenJDK21U-jdk_x64_linux_hotspot_21.0.6_7.tar.gz&response-content-type=application%2Foctet-stream"
+
+# Ensure directories exist
+mkdir -p "$SDK_DIR"
+mkdir -p "$CMDLINE_TOOLS_DIR"
+
+# Install Android Studio if not installed
+if [ ! -d "$ANDROID_STUDIO_DIR" ]; then
+    echo "Extracting Android Studio..."
+    mkdir -p "$ANDROID_STUDIO_DIR"
+    tar -xvzf "$ANDROID_STUDIO_ZIP" -C "$ANDROID_STUDIO_DIR" --strip-components=1
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract Android Studio."
+        exit 1
+    fi
+    echo "Android Studio extracted successfully."
+else
+    echo "Android Studio is already installed."
+fi
+
+# Ensure cmdline-tools is installed
+if [ ! -f "$CMDLINE_TOOLS_ZIP" ]; then
+    echo "Error: cmdline-tools zip file does not exist at $CMDLINE_TOOLS_ZIP"
+    exit 1
+fi
+
+if [ ! -d "$CMDLINE_TOOLS_DIR" ]; then
+    echo "Extracting cmdline-tools..."
+    unzip -q "$CMDLINE_TOOLS_ZIP" -d "$CMDLINE_TOOLS_DIR"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract cmdline-tools."
+        exit 1
+    fi
+    echo "cmdline-tools extracted successfully."
+else
+    echo "cmdline-tools already extracted."
+fi
+
+# Download OpenJDK if not already downloaded
+if [ ! -f "$JAVA_TAR" ]; then
+    echo "OpenJDK tar file does not exist. Downloading OpenJDK..."
+    wget -O "$JAVA_TAR" "$JAVA_DOWNLOAD_URL"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to download OpenJDK."
+        exit 1
+    fi
+    echo "OpenJDK downloaded successfully."
+fi
+
+# Extract OpenJDK if not already extracted
+if [ ! -d "$SDK_DIR/jdk" ]; then
+    echo "Extracting OpenJDK..."
+    mkdir -p "$SDK_DIR/jdk"
+    tar -xvzf "$JAVA_TAR" -C "$SDK_DIR/jdk"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract OpenJDK."
+        exit 1
+    fi
+    echo "OpenJDK extracted successfully."
+fi
+
+# Set JAVA_HOME and update PATH
+export JAVA_HOME="$SDK_DIR/jdk/jdk-21.0.6+7"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# Verify Java installation
+java -version
+
+# Install SDK packages
+echo "Installing SDK packages..."
+yes | "$CMDLINE_TOOLS_DIR/cmdline-tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+if [ $? -ne 0 ]; then
+    echo "Error: SDK package installation failed."
+    exit 1
+fi
+echo "SDK packages installed successfully."
+
+# Ensure system images are installed for the AVD (Android Virtual Device)
+echo "Installing system image for AVD..."
+"$CMDLINE_TOOLS_DIR/cmdline-tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "system-images;android-30;google_apis;x86_64"
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to install system image."
+    exit 1
+fi
+echo "System image installed successfully."
+
+# Create Android Virtual Device (AVD)
+AVD_NAME="Pixel_4_API_30"
+if ! "$SDK_DIR/emulator/emulator" -list-avds | grep -q "$AVD_NAME"; then
+    echo "Creating Android Virtual Device (AVD)..."
+    "$CMDLINE_TOOLS_DIR/cmdline-tools/bin/avdmanager" create avd --name "$AVD_NAME" --package "system-images;android-30;google_apis;x86_64" --force
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to create AVD."
+        exit 1
+    fi
+    echo "AVD created successfully."
+else
+    echo "AVD '$AVD_NAME' already exists."
+fi
+
+# Fix shared memory issue with the emulator by specifying a different temp location
+echo "Setting alternate temp directory to avoid shared memory issues..."
+export JAVA_OPTS="-Djava.io.tmpdir=/goinfre/$USER/tmp"
+
+# Start the Android Emulator
+echo "Starting the Android Emulator..."
+"$SDK_DIR/emulator/emulator" -avd "$AVD_NAME" &
+
+# Wait for the emulator to start
+echo "Waiting for the emulator to start..."
+sleep 60  # You can adjust the sleep time as needed
+
+echo "Android Emulator started successfully."
+
+# Ensure cmdline-tools is installed
+if [ ! -f "$CMDLINE_TOOLS_ZIP" ]; then
+    echo "Error: cmdline-tools zip file does not exist at $CMDLINE_TOOLS_ZIP"
+    exit 1
+fi
+
+if [ ! -d "$CMDLINE_TOOLS_DIR" ]; then
+    echo "Extracting cmdline-tools..."
+    unzip -q "$CMDLINE_TOOLS_ZIP" -d "$CMDLINE_TOOLS_DIR"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract cmdline-tools."
+        exit 1
+    fi
+    echo "cmdline-tools extracted successfully."
+else
+    echo "cmdline-tools already extracted."
+fi
+
+# Download OpenJDK if not already downloaded
+if [ ! -f "$JAVA_TAR" ]; then
+    echo "OpenJDK tar file does not exist. Downloading OpenJDK..."
+    wget -O "$JAVA_TAR" "$JAVA_DOWNLOAD_URL"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to download OpenJDK."
+        exit 1
+    fi
+    echo "OpenJDK downloaded successfully."
+fi
+
+# Extract OpenJDK if not already extracted
+if [ ! -d "$SDK_DIR/jdk" ]; then
+    echo "Extracting OpenJDK..."
+    mkdir -p "$SDK_DIR/jdk"
+    tar -xvzf "$JAVA_TAR" -C "$SDK_DIR/jdk"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to extract OpenJDK."
+        exit 1
+    fi
+    echo "OpenJDK extracted successfully."
+fi
+
+# Set JAVA_HOME and update PATH
+export JAVA_HOME="$SDK_DIR/jdk/jdk-21.0.6+7"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# Verify Java installation
+java -version
+
+# Install SDK packages
+echo "Installing SDK packages..."
+yes | "$CMDLINE_TOOLS_DIR/cmdline-tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+if [ $? -ne 0 ]; then
+    echo "Error: SDK package installation failed."
+    exit 1
+fi
+echo "SDK packages installed successfully."
+
+# Ensure system images are installed for the AVD (Android Virtual Device)
+echo "Installing system image for AVD..."
+"$CMDLINE_TOOLS_DIR/cmdline-tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "system-images;android-30;google_apis;x86_64"
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to install system image."
+    exit 1
+fi
+echo "System image installed successfully."
+
+# Create Android Virtual Device (AVD)
+AVD_NAME="Pixel_4_API_30"
+if ! "$SDK_DIR/emulator/emulator" -list-avds | grep -q "$AVD_NAME"; then
+    echo "Creating Android Virtual Device (AVD)..."
+    "$CMDLINE_TOOLS_DIR/cmdline-tools/bin/avdmanager" create avd --name "$AVD_NAME" --package "system-images;android-30;google_apis;x86_64" --force
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to create AVD."
+        exit 1
+    fi
+    echo "AVD created successfully."
+else
+    echo "AVD '$AVD_NAME' already exists."
+fi
+
+# Fix shared memory issue with the emulator by specifying a different temp location
+echo "Setting alternate temp directory to avoid shared memory issues..."
+export JAVA_OPTS="-Djava.io.tmpdir=/goinfre/$USER/tmp"
+
+# Start the Android Emulator
+echo "Starting the Android Emulator..."
+"$SDK_DIR/emulator/emulator" -avd "$AVD_NAME" &
+
+# Wait for the emulator to start
+echo "Waiting for the emulator to start..."
+sleep 60  # You can adjust the sleep time as needed
+
+echo "Android Emulator started successfully."
